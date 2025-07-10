@@ -303,16 +303,34 @@ def create_choropleth_map(
         ] = iso
 
     # Create the base map
-    fig = px.choropleth(
-        plot_data,
-        locations="iso3",
-        locationmode="ISO-3",
-        color=value_column,
-        hover_name=location_column,
-        color_continuous_scale=color_continuous_scale,
-        range_color=range_color,
-        scope="africa",
-        labels={value_column: ""},
+    fig = go.Figure()
+
+    # Add main choropleth trace
+    fig.add_trace(
+        go.Choropleth(
+            locations=plot_data["iso3"],
+            z=plot_data[value_column],
+            locationmode="ISO-3",
+            colorscale=color_continuous_scale,
+            zmin=range_color[0] if range_color else None,
+            zmax=range_color[1] if range_color else None,
+            marker_line_width=0.5,
+            marker_line_color="rgba(100,100,100,0.5)",
+            hoverinfo="location+z",
+            hoverlabel=dict(bgcolor="white"),
+        )
+    )
+
+    # Add Western Sahara with special border treatment using Scattergeo
+    fig.add_trace(
+        go.Scattergeo(
+            locations=["ESH"],
+            locationmode="ISO-3",
+            mode="lines",
+            line=dict(width=0.5, color="rgba(100,100,100,0.5)", dash="dot"),
+            hoverinfo="none",
+            showlegend=False,
+        )
     )
 
     # UN-Compliant Styling
@@ -331,24 +349,10 @@ def create_choropleth_map(
             # Center on Africa with appropriate projection
             center=dict(lat=8, lon=20),
             projection_scale=1.2,
+            scope="africa",
         ),
         margin={"r": 0, "t": 40, "l": 0, "b": 40},
         coloraxis_colorbar=dict(thickness=15, len=0.75, yanchor="middle", y=0.5),
-    )
-
-    # Special treatment for Western Sahara (dashed borders)
-    fig.add_trace(
-        go.Choropleth(
-            locations=["ESH"],
-            z=[1],  # Dummy value
-            locationmode="ISO-3",
-            showscale=False,
-            colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
-            marker_line_width=0.5,
-            marker_line_color="rgba(100,100,100,0.5)",
-            marker_line_dash="dot",
-            hoverinfo="none",
-        )
     )
 
     # Adjust view to include all island states
